@@ -1,0 +1,33 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build with Maven') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh 'docker build -t insure-me:jenkins .'
+            }
+        }
+
+        stage('Deploy Container') {
+            steps {
+                sh '''
+                    docker stop insure-me-app || true
+                    docker rm insure-me-app || true
+                    docker run -d --name insure-me-app -p 8081:8081 insure-me:jenkins
+                '''
+            }
+        }
+    }
+}
