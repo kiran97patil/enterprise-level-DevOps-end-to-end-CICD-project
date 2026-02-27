@@ -1,5 +1,14 @@
 pipeline {
     agent any
+    
+    tools {
+        maven 'Maven-3'
+    }
+
+    environment {
+        SONAR_PROJECT_KEY  = 'devops-masterpiece'              // yahan apna Sonar project key
+        SONAR_PROJECT_NAME = 'DevOps MasterPiece CI with Jenkins'
+    }
 
     stages {
         stage('Checkout') {
@@ -11,6 +20,18 @@ pipeline {
         stage('Build with Maven') {
             steps {
                 sh 'mvn clean package'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonarqube-server') {
+                    sh """
+                      mvn sonar:sonar \
+                        -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                        -Dsonar.projectName=${SONAR_PROJECT_NAME}
+                    """
+                }
             }
         }
 
