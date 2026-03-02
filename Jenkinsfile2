@@ -63,6 +63,22 @@ pipeline {
                 sh 'docker build -t insure-me:jenkins .'
             }
         }
+        stage('Docker Push to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DH_USER', passwordVariable: 'DH_PASS')]) {
+                    sh '''
+                      echo "Logging in to Docker Hub..."
+                      echo "$DH_PASS" | docker login -u "$DH_USER" --password-stdin
+
+                      echo "Tagging image..."
+                      docker tag insure-me:jenkins $DH_USER/insure-me:latest
+
+                      echo "Pushing image to Docker Hub..."
+                      docker push $DH_USER/insure-me:latest
+                    '''
+                }
+            }
+        }
 
         stage('Deploy Container') {
             steps {
