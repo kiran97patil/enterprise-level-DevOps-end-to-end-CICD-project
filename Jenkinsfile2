@@ -41,21 +41,21 @@ pipeline {
                 withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                     sh """
                       echo "Checking SonarQube Quality Gate status..."
-                      RESPONSE=\$(curl -s -u $SONAR_TOKEN: ${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=${SONAR_PROJECT_KEY})
-                      echo "API response: \$RESPONSE"
+                      RESPONSE=\\$(curl -s -u \\$SONAR_TOKEN: ${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=${SONAR_PROJECT_KEY})
+                      echo "API response: \\$RESPONSE"
 
-                      STATUS=\$(echo "\$RESPONSE" | sed -n 's/.*"status":"\$$$[^"]*\$$$".*/\\1/p')
-                      echo "Quality Gate status: \$STATUS"
+                      STATUS=\$(echo "\\$RESPONSE" | sed -n 's/.*"status":"\$$$[^"]*\$$$".*/\\1/p')
+                      echo "Quality Gate status: \\$STATUS"
 
-                      if [ "\$STATUS" != "OK" ]; then
-                        echo "Quality Gate FAILED: \$STATUS"
+                      if [ "\\$STATUS" != "OK" ]; then
+                        echo "Quality Gate FAILED: \\$STATUS"
                         exit 1
                       fi
                     """
                 }
             }
         }
-
+	
 
         stage('Docker Build') {
             steps {
