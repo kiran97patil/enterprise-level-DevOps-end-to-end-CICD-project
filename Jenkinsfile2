@@ -23,18 +23,6 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('sonarqube-server') {
-                    sh """
-                      mvn sonar:sonar \
-                        -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                        -Dsonar.projectName=${SONAR_PROJECT_NAME}
-                    """
-                }
-            }
-        }
-
         stage('Docker Build') {
             steps {
                 sh 'docker build -t insure-me:jenkins .'
