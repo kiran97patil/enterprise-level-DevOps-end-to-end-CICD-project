@@ -79,7 +79,37 @@ pipeline {
                 }
             }
         }
+                stage('Update K8s Manifests Repo') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'github-kiran',
+                                                 usernameVariable: 'GIT_USER',
+                                                 passwordVariable: 'GIT_TOKEN')]) {
+                    sh '''
+                      echo "Cloning manifests repo..."
+                      rm -rf manifests-repo
+                      git clone https://${GIT_USER}:${GIT_TOKEN}@github.com/kiran97patil/insure-me-k8s-manifests.git manifests-repo
 
+                      cd manifests-repo/k8s
+
+                      # Jenkins build number ko image tag banate hain
+                      NEW_TAG=${BUILD_NUMBER}
+                      echo "Updating image tag in deployment.yaml to kirankhode/insure-me:${NEW_TAG} ..."
+
+                      # image line replace karo
+                      sed -i "s#image: kirankhode/insure-me:.*#image: kirankhode/insure-me:${NEW_TAG}#g" deployment.yaml
+
+                      echo "Git diff after change:"
+                      git diff || true
+
+                      git config user.email "narendrakhode1990@gmail.com"
+                      git config user.name "narendra khode"
+
+                      git commit -am "Update image tag to ${NEW_TAG} from Jenkins build ${BUILD_NUMBER}" || echo "No changes to commit"
+                      git push origin main
+                    '''
+                }
+            }
+        }
         stage('Deploy Container') {
             steps {
                 sh '''
