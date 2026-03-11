@@ -8,7 +8,7 @@ pipeline {
     environment {
         SONAR_PROJECT_KEY  = 'devops-masterpiece'              // yahan apna Sonar project key
         SONAR_PROJECT_NAME = 'DevOps MasterPiece CI with Jenkins'
-        SONAR_HOST_URL     = 'http://host.docker.internal:9000'
+        SONAR_HOST_URL     = 'http://sonarqube:9000'
     }
 
     stages {
