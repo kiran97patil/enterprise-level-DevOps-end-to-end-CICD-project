@@ -118,6 +118,19 @@ pipeline {
                     docker run -d --name insure-me-app -p 8082:8081 insure-me:jenkins
                 '''
             }
+    post {
+        success {
+            slackSend channel: '#all-devops-practice',
+                      color: 'good',
+                      message: "✅ SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${env.BUILD_URL}"
+        }
+        failure {
+            slackSend channel: '#all-devops-practice',
+                      color: 'danger',
+                      message: "❌ FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${env.BUILD_URL}"
+        }
+    }
+}
         }
     }
 }
