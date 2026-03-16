@@ -135,19 +135,19 @@ pipeline {
             }
         }
      }
-post {
+    post {
         success {
             slackSend channel: '#all-devops-practice',
                       color: 'good',
+                      tokenCredentialId: 'slack-bot-token',
                       message: "✅ SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${env.BUILD_URL}"
         }
         failure {
             slackSend channel: '#all-devops-practice',
                       color: 'danger',
+                      tokenCredentialId: 'slack-bot-token',
                       message: "❌ FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${env.BUILD_URL}"
-        
-    
-
         }
     }
+}
 }
