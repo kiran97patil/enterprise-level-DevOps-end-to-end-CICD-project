@@ -75,7 +75,7 @@ pipeline {
                       echo "Uploading JAR to Artifactory..."
 
                       # Artifactory host (NodePort on Rancher Desktop)
-                      ART_HOST="http://192.168.xx.yy:32002"   # yahan apna actual INTERNAL-IP daalo
+                      ART_HOST="http:// 192.168.127.2 :32002"   # yahan apna actual INTERNAL-IP daalo
 
                       # Local repo name (update if different)
                       REPO="generic-local"
