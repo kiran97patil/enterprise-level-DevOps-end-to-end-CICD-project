@@ -6,10 +6,6 @@ pipeline {
     }
 
     environment {
-        SONAR_PROJECT_KEY  = 'devops-masterpiece'
-        SONAR_PROJECT_NAME = 'DevOps MasterPiece CI with Jenkins'
-        SONAR_HOST_URL     = 'http://sonarqube:9000'
-
         DOCKER_IMAGE = 'insure-me'    // local image name
     }
 
@@ -27,74 +23,7 @@ pipeline {
             }
         }
 
-        /* ---------------- SonarQube (TEMPORARILY DISABLED) ----------------
-
-        stage('SonarQube Analysis') {
-            steps {
-                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                    sh '''
-                      mvn sonar:sonar \
-                        -Dsonar.projectKey=$SONAR_PROJECT_KEY \
-                        -Dsonar.projectName="$SONAR_PROJECT_NAME" \
-                        -Dsonar.host.url=$SONAR_HOST_URL \
-                        -Dsonar.login=$SONAR_TOKEN
-                    '''
-                }
-            }
-        }
-
-        stage('Quality Gate') {
-            steps {
-                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                    sh '''
-                      echo "Checking SonarQube Quality Gate status..."
-
-                      RESPONSE=$(curl -s -u $SONAR_TOKEN: $SONAR_HOST_URL/api/qualitygates/project_status?projectKey=$SONAR_PROJECT_KEY)
-                      echo "API response: $RESPONSE"
-
-                      STATUS=$(echo "$RESPONSE" | grep -o '"status":"[^"]*"' | head -1 | cut -d':' -f2 | tr -d '"')
-                      echo "Quality Gate status: $STATUS"
-
-                      if [ "$STATUS" != "OK" ]; then
-                        echo "Quality Gate FAILED: $STATUS"
-                        exit 1
-                      fi
-                    '''
-                }
-            }
-        }
-
-        ---------------- SonarQube (TEMPORARILY DISABLED) ---------------- */
-
-        stage('Upload Jar to Artifactory') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'artifactory-creds',
-                                                 usernameVariable: 'ART_USER',
-                                                 passwordVariable: 'ART_PASS')]) {
-                    sh '''
-                      echo "Uploading JAR to Artifactory..."
-
-                      # Artifactory host (NodePort on Rancher Desktop)
-                      ART_HOST="http:// 192.168.127.2 :32002"   # yahan apna actual INTERNAL-IP daalo
-
-                      # Local repo name (update if different)
-                      REPO="generic-local"
-
-                      # Jar file path from Maven build
-                      FILE="target/insure-me-1.0.jar"
-
-                      # Path inside Artifactory repo
-                      TARGET_PATH="insure-me/${BUILD_NUMBER}/insure-me-${BUILD_NUMBER}.jar"
-
-                      echo "Uploading ${FILE} to ${ART_HOST}/artifactory/${REPO}/${TARGET_PATH}"
-
-                      curl -v -u ${ART_USER}:${ART_PASS} \
-                        -T ${FILE} \
-                        "${ART_HOST}/artifactory/${REPO}/${TARGET_PATH}"
-                    '''
-                }
-            }
-        }
+        /* --------- OPTIONAL: SonarQube stages yahan se baad me add kar sakte hain --------- */
 
         stage('Docker Build') {
             steps {
@@ -144,6 +73,37 @@ pipeline {
             }
         }
 
+        stage('Upload Jar to Artifactory (non-blocking)') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'artifactory-creds',
+                                                 usernameVariable: 'ART_USER',
+                                                 passwordVariable: 'ART_PASS')]) {
+                    sh '''
+                      echo "Trying to upload JAR to Artifactory (will not fail build if unreachable)..."
+
+                      # NOTE: is host ko apne Rancher node ke IP se update kar sakte hain:
+                      # kubectl get nodes -o wide  -> INTERNAL-IP
+                      ART_HOST="http://localhost:8082"   # ya http://<INTERNAL-IP>:32002
+
+                      REPO="generic-local"
+                      FILE="target/insure-me-1.0.jar"
+                      TARGET_PATH="insure-me/${BUILD_NUMBER}/insure-me-${BUILD_NUMBER}.jar"
+
+                      if [ -f "${FILE}" ]; then
+                        echo "Uploading ${FILE} to ${ART_HOST}/artifactory/${REPO}/${TARGET_PATH}"
+                        # Non-blocking: agar fail hua to sirf warning print karega
+                        curl -v -u ${ART_USER}:${ART_PASS} \
+                          -T ${FILE} \
+                          "${ART_HOST}/artifactory/${REPO}/${TARGET_PATH}" || \
+                          echo "WARN: Artifactory upload failed (dev env), continuing pipeline..."
+                      else
+                        echo "WARN: ${FILE} not found, skipping Artifactory upload"
+                      fi
+                    '''
+                }
+            }
+        }
+
         stage('Update K8s Manifests Repo') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'github-kiran',
@@ -185,7 +145,7 @@ pipeline {
         }
     }
 
-       post {
+    post {
         success {
             script {
                 try {
@@ -213,5 +173,4 @@ pipeline {
             }
         }
     }
-}
 }
