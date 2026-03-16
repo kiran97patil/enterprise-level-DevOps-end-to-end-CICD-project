@@ -63,10 +63,10 @@ pipeline {
                 sh 'docker build -t insure-me:jenkins .'
             }
         }
-        stage('Security Scan (Trivy)') {
+                stage('Security Scan (Trivy)') {
             steps {
                 sh '''
-                  echo "Running Trivy scan on image ${DOCKER_IMAGE}:${IMAGE_TAG} ..."
+                  echo "Running Trivy scan on image insure-me:jenkins ..."
 
                   docker run --rm \
                     -v /var/run/docker.sock:/var/run/docker.sock \
@@ -74,7 +74,7 @@ pipeline {
                     aquasec/trivy:0.50.2 image \
                     --exit-code 1 \
                     --severity HIGH,CRITICAL \
-                    ${DOCKER_IMAGE}:${IMAGE_TAG}
+                    insure-me:jenkins
                 '''
             }
         }
