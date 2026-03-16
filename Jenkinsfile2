@@ -152,6 +152,35 @@ pipeline {
             }
         }
     }
+        stage('Upload Jar to Artifactory') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'artifactory-creds',
+                                                 usernameVariable: 'ART_USER',
+                                                 passwordVariable: 'ART_PASS')]) {
+                    sh '''
+                      echo "Uploading JAR to Artifactory..."
+
+                      # Artifactory host (NodePort on Rancher Desktop)
+                      ART_HOST="http://DESKTOP-66OFECA:32002"
+
+                      # Local repo name
+                      REPO="generic-local"
+
+                      # Jar file path from Maven build
+                      FILE="target/insure-me-1.0.jar"
+
+                      # Path inside Artifactory repo
+                      TARGET_PATH="insure-me/${BUILD_NUMBER}/insure-me-${BUILD_NUMBER}.jar"
+
+                      echo "Uploading ${FILE} to ${ART_HOST}/artifactory/${REPO}/${TARGET_PATH}"
+
+                      curl -v -u ${ART_USER}:${ART_PASS} \
+                        -T ${FILE} \
+                        "${ART_HOST}/artifactory/${REPO}/${TARGET_PATH}"
+                    '''
+                }
+            }
+        }
 
     post {
         success {
