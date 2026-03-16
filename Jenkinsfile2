@@ -185,18 +185,33 @@ pipeline {
         }
     }
 
-    post {
+       post {
         success {
-            slackSend channel: '#all-devops-practice',
-                      color: 'good',
-                      tokenCredentialId: 'slack-bot-token',
-                      message: "✅ SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${env.BUILD_URL}"
+            script {
+                try {
+                    slackSend channel: '#all-devops-practice',
+                              color: 'good',
+                              tokenCredentialId: 'slack-bot-token',
+                              failOnError: false,
+                              message: "✅ SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${env.BUILD_URL}"
+                } catch (e) {
+                    echo "Slack SUCCESS notification failed: ${e.message}"
+                }
+            }
         }
         failure {
-            slackSend channel: '#all-devops-practice',
-                      color: 'danger',
-                      tokenCredentialId: 'slack-bot-token',
-                      message: "❌ FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${env.BUILD_URL}"
+            script {
+                try {
+                    slackSend channel: '#all-devops-practice',
+                              color: 'danger',
+                              tokenCredentialId: 'slack-bot-token',
+                              failOnError: false,
+                              message: "❌ FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${env.BUILD_URL}"
+                } catch (e) {
+                    echo "Slack FAILURE notification failed: ${e.message}"
+                }
+            }
         }
     }
+}
 }
